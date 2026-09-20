@@ -1,0 +1,12 @@
+[
+  {
+    "id": "71e8242a-3fe6-4353-8dbb-ac61df4bd175",
+    "name": "Harry potter and the phylosophy stone",
+    "sku": "COARCH1",
+    "price": 500.0,
+    "category": "fantasy",
+    "tags": [
+      "string"
+    ]
+    }
+]
