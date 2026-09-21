@@ -1,0 +1,54 @@
+@import url(reset.css);
+
+body {
+	background-color: #000;
+	color: #fff;
+	padding-block: 30px;
+}
+
+nav{
+	display: flex;
+	justify-content: center;
+}
+
+ul{
+	display: inline-flex;
+	gap: 30px;
+}
+
+li {
+	color: #ffffff;
+	text-decoration: none;
+	position: relative;
+	padding-bottom: 4px;
+	font-size: 32px;
+	transition: 0.3s;
+}
+
+li::after {
+	content: "";
+	width: 0;
+	position: absolute;
+	height: 2px;
+	bottom: 0;
+	left: 0;
+	background-color: #fff;
+	-webkit-transition: width 0.2s ease;
+	transition: width 0.2s ease;
+}
+
+li:hover::after {
+	width: 100%;
+	left: 0;
+}
+
+h1{
+	text-align: center;
+	font-size: 50px;
+	margin-bottom: 20px;
+}
+
+p{
+	font-size: 20px;
+	text-align: center;
+}
