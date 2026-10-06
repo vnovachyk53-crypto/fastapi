@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/style.css">
+    <title>Document</title>
+</head>
+<body>
+    <h1>
+        Таск менеджер!
+    </h1>
+
+    <div class="container">
+        <div class="card">
+            <h2>Проєкти</h2>
+            <form id="project-form">
+                <input type="text" id="project-name" placeholder="Назва проєкту" required>
+                <textarea id="project-desc" placeholder="Опис проєкту"></textarea>
+                <button type="submit">Створити проєкт</button>
+            </form>
+            <ul id="projects-list"></ul>
+        </div>
+
+        <div class="card">
+            <h2>Завдання</h2>
+            <form id="task-form">
+                <input type="text" id="task-title" placeholder="Назва завдання" required>
+                <input type="number" id="task-project-id" placeholder="ID проєкту" required>
+                <button type="submit">Створити завдання</button>
+            </form>
+            <ul id="tasks-list"></ul>
+        </div>
+    </div>
+</body>
+</html>
