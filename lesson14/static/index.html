@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Автопарк</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f9; color: #333; }
+        nav { margin-bottom: 20px; background: #fff; padding: 10px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        nav a { margin-right: 15px; text-decoration: none; color: #007BFF; font-weight: bold; cursor: pointer; }
+        nav a:hover { text-decoration: underline; }
+        .card { background: #fff; padding: 15px; margin-bottom: 15px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: #fff; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #007BFF; color: white; }
+        input, select, button { padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+        button { background: #28a745; color: white; border: none; cursor: pointer; border-radius: 3px; }
+        button:hover { background: #218838; }
+        .danger { background: #dc3545; }
+        .danger:hover { background: #c82333; }
+        .hidden { display: none; }
+        .error { color: red; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a onclick="showSection('home')">Головна</a>
+        <a onclick="showSection('companies')">Перевізники</a>
+        <a onclick="showSection('buses')">Автобуси</a>
+        <a onclick="showSection('routes')">Маршрути</a>
+        <a onclick="showSection('drivers')">Водії</a>
+    </nav>
+
+    <div id="error-banner" class="error" style="margin-bottom: 10px; font-weight: bold;"></div>
+
+    <!-- ГОЛОВНА -->
+    <section id="sec-home" class="card">
+        <h2>Стан системи «Автопарк»</h2>
+        <p>Статус сервера (/health): <span id="health-status" style="font-weight: bold;">перевірка...</span></p>
+        <ul>
+            <li>Перевізників: <span id="cnt-companies">0</span></li>
+            <li>Автобусів: <span id="cnt-buses">0</span></li>
+            <li>Маршрутів: <span id="cnt-routes">0</span></li>
+            <li>Водіїв: <span id="cnt-drivers">0</span></li>
+        </ul>
+    </section>
+
+    <!-- ПЕРЕВІЗНИКИ -->
+    <section id="sec-companies" class="card hidden">
+        <h2>Перевізники</h2>
+        <form id="form-company" onsubmit="createCompany(event)">
+            <input type="text" id="comp-name" placeholder="Назва перевізника (2-120)" required>
+            <input type="text" id="comp-phone" placeholder="Телефон (7-20)" required>
+            <button type="submit">Додати перевізника</button>
+        </form>
+        <div id="companies-list">Завантаження...</div>
+    </section>
+
+    <!-- АВТОБУСИ -->
+    <section id="sec-buses" class="card hidden">
+        <h2>Автобуси</h2>
+        <div id="bus-form-container">
+            <form id="form-bus" onsubmit="createBus(event)">
+                <input type="text" id="bus-plate" placeholder="Держ. номер (4-15)" required>
+                <input type="text" id="bus-model" placeholder="Модель (2-80)" required>
+                <input type="number" id="bus-seats" placeholder="Кількість місць (10-120)" min="10" max="120" required>
+                <select id="bus-company-select" required></select>
+                <button type="submit">Додати автобус</button>
+            </form>
+        </div>
+        <div id="buses-list">Завантаження...</div>
+    </section>
+
+    <!-- МАРШРУТИ -->
+    <section id="sec-routes" class="card hidden">
+        <h2>Маршрути</h2>
+        <form id="form-route" onsubmit="createRoute(event)">
+            <input type="text" id="route-number" placeholder="Номер маршруту (1-10)" required>
+            <input type="text" id="route-title" placeholder="Назва маршруту (3-120)" required>
+            <input type="number" id="route-dist" placeholder="Відстань в км (1-5000)" min="1" max="5000" required>
+            <button type="submit">Додати маршрут</button>
+        </form>
+        <div id="routes-list">Завантаження...</div>
+    </section>
+
+    <!-- ВОДІЇ -->
+    <section id="sec-drivers" class="card hidden">
+        <h2>Водії</h2>
+        <form id="form-driver" onsubmit="saveDriver(event)">
+            <input type="hidden" id="driver-edit-id">
+            <input type="text" id="drv-name" placeholder="ПІБ водія (3-120)" required>
+            <input type="text" id="drv-phone" placeholder="Телефон (7-20)" required>
+            <input type="text" id="drv-license" placeholder="Номер посвідчення (5-20)" required>
+            <select id="drv-company-select" required></select>
+            <button type="submit" id="drv-submit-btn">Зберегти водія</button>
+            <button type="button" id="drv-cancel-btn" class="hidden danger" onclick="resetDriverForm()">Скасувати</button>
+        </form>
+        <hr>
+        <input type="text" id="driver-search" placeholder="Пошук по ПІБ на сторінці..." onkeyup="filterDrivers()">
+        <div id="drivers-list">Завантаження...</div>
+        <div>
+            <button onclick="prevPage()">Попередня</button>
+            <span>Сторінка: <span id="page-num">1</span></span>
+            <button onclick="nextPage()">Наступна</button>
+        </div>
+    </section>
+
+    <!-- КАРТКА ВОДІЯ ТА ДОПУСКИ -->
+    <section id="sec-driver-detail" class="card hidden">
+        <button onclick="showSection('drivers')">← Назад до водіїв</button>
+        <h2 id="det-driver-title">Картка водія</h2>
+        <p>Телефон: <span id="det-phone"></span> | Посвідчення: <span id="det-license"></span> | Перевізник: <span id="det-comp"></span></p>
+
+        <h3>Допущені маршрути (<span id="det-routes-count">0</span>)</h3>
+        <div id="det-routes-list">Завантаження...</div>
+
+        <h3>Допустити до маршруту</h3>
+        <form onsubmit="assignRoute(event)">
+            <select id="assign-route-select" required></select>
+            <button type="submit">Додати допуск</button>
+        </form>
+    </section>
+
+<script>
+    const API = "";
+    let currentLimit = 20;
+    let currentOffset = 0;
+    let activeDriverId = null;
+
+    function showSection(secId) {
+        document.querySelectorAll('body > section').forEach(s => s.classList.add('hidden'));
+        document.getElementById('sec-' + secId).classList.remove('hidden');
+        document.getElementById('error-banner').innerText = '';
+        if (secId === 'home') loadHome();
+        if (secId === 'companies') loadCompanies();
+        if (secId === 'buses') loadBuses();
+        if (secId === 'routes') loadRoutes();
+        if (secId === 'drivers') loadDrivers();
+    }
+
+    async function checkHealth() {
+        try {
+            let res = await fetch(API + '/health');
+            let data = await res.json();
+            document.getElementById('health-status').innerText = data.status === 'ok' ? 'Працює' : 'Помилка';
+            document.getElementById('health-status').style.color = 'green';
+        } catch {
+            document.getElementById('health-status').innerText = 'Недоступний';
+            document.getElementById('health-status').style.color = 'red';
+            document.getElementById('error-banner').innerText = 'Попередження: Немає зв’язку з бекендом!';
+        }
+    }
+
+    async function loadHome() {
+        checkHealth();
+        try {
+            let [c, b, r, d] = await Promise.all([
+                fetch(API + '/companies').then(r => r.json()),
+                fetch(API + '/buses').then(r => r.json()),
+                fetch(API + '/routes').then(r => r.json()),
+                fetch(API + '/drivers').then(r => r.json())
+            ]);
+            document.getElementById('cnt-companies').innerText = c.length;
+            document.getElementById('cnt-buses').innerText = b.length;
+            document.getElementById('cnt-routes').innerText = r.length;
+            document.getElementById('cnt-drivers').innerText = d.length;
+        } catch (e) { console.error(e); }
+    }
+
+    async function loadCompaniesForSelect(selectId) {
+        let res = await fetch(API + '/companies');
+        let comps = await res.json();
+        let sel = document.getElementById(selectId);
+        sel.innerHTML = '';
+        comps.forEach(c => {
+            let opt = document.createElement('option');
+            opt.value = c.id;
+            opt.innerText = c.name;
+            sel.appendChild(opt);
+        });
+        return comps.length;
+    }
+
+    // --- ПЕРЕВІЗНИКИ ---
+    async function loadCompanies() {
+        let container = document.getElementById('companies-list');
+        container.innerHTML = 'Завантаження...';
+        try {
+            let res = await fetch(API + '/companies');
+            let data = await res.json();
+            if (data.length === 0) { container.innerHTML = '<p>Список порожній</p>'; return; }
+            let html = '<table><tr><th>Назва</th><th>Телефон</th></tr>';
+            data.forEach(x => html += `<tr><td>${escapeHtml(x.name)}</td><td>${escapeHtml(x.phone)}</td></tr>`);
+            container.innerHTML = html + '</table>';
+        } catch { container.innerHTML = '<p class="error">Помилка завантаження</p>'; }
+    }
+
+    async function createCompany(e) {
+        e.preventDefault();
+        let body = { name: document.getElementById('comp-name').value.trim(), phone: document.getElementById('comp-phone').value.trim() };
+        let res = await fetch(API + '/companies', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+        if (res.ok) { document.getElementById('form-company').reset(); loadCompanies(); }
+        else { let err = await res.json(); alert(err.detail || 'Помилка'); }
+    }
+
+    // --- АВТОБУСИ ---
+    async function loadBuses() {
+        let container = document.getElementById('buses-list');
+        container.innerHTML = 'Завантаження...';
+        try {
+            let count = await loadCompaniesForSelect('bus-company-select');
+            if (count === 0) {
+                document.getElementById('bus-form-container').innerHTML = '<p class="error">Спочатку створіть хоча б одного перевізника!</p>';
+            }
+            let res = await fetch(API + '/buses');
+            let data = await res.json();
+            if (data.length === 0) { container.innerHTML = '<p>Список порожній</p>'; return; }
+            let html = '<table><tr><th>Номер</th><th>Модель</th><th>Місць</th><th>Перевізник</th></tr>';
+            data.forEach(x => html += `<tr><td>${escapeHtml(x.plate_number)}</td><td>${escapeHtml(x.model)}</td><td>${x.seats}</td><td>${escapeHtml(x.company_name)}</td></tr>`);
+            container.innerHTML = html + '</table>';
+        } catch { container.innerHTML = '<p class="error">Помилка завантаження</p>'; }
+    }
+
+    async function createBus(e) {
+        e.preventDefault();
+        let body = {
+            plate_number: document.getElementById('bus-plate').value.trim(),
+            model: document.getElementById('bus-model').value.trim(),
+            seats: parseInt(document.getElementById('bus-seats').value),
+            company_id: parseInt(document.getElementById('bus-company-select').value)
+        };
+        let res = await fetch(API + '/buses', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+        if (res.ok) { document.getElementById('form-bus').reset(); loadBuses(); }
+        else { let err = await res.json(); alert(err.detail || 'Помилка'); }
+    }
+
+    // --- МАРШРУТИ ---
+    async function loadRoutes() {
+        let container = document.getElementById('routes-list');
+        container.innerHTML = 'Завантаження...';
+        try {
+            let res = await fetch(API + '/routes');
+            let data = await res.json();
+            if (data.length === 0) { container.innerHTML = '<p>Список порожній</p>'; return; }
+            let html = '<table><tr><th>Номер</th><th>Назва</th><th>Відстань (км)</th></tr>';
+            data.forEach(x => html += `<tr><td>${escapeHtml(x.number)}</td><td>${escapeHtml(x.title)}</td><td>${x.distance_km}</td></tr>`);
+            container.innerHTML = html + '</table>';
+        } catch { container.innerHTML = '<p class="error">Помилка завантаження</p>'; }
+    }
+
+    async function createRoute(e) {
+        e.preventDefault();
+        let body = {
+            number: document.getElementById('route-number').value.trim(),
+            title: document.getElementById('route-title').value.trim(),
+            distance_km: parseInt(document.getElementById('route-dist').value)
+        };
+        let res = await fetch(API + '/routes', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+        if (res.ok) { document.getElementById('form-route').reset(); loadRoutes(); }
+        else { let err = await res.json(); alert(err.detail || 'Помилка'); }
+    }
+
+    // --- ВОДІЇ ---
+    async function loadDrivers() {
+        let container = document.getElementById('drivers-list');
+        container.innerHTML = 'Завантаження...';
+        await loadCompaniesForSelect('drv-company-select');
+        try {
+            let res = await fetch(`${API}/drivers?limit=${currentLimit + 1}&offset=${currentOffset}`);
+            let data = await res.json();
+            window.driversData = data;
+            renderDriversTable(data);
+        } catch { container.innerHTML = '<p class="error">Помилка завантаження</p>'; }
+    }
+
+    function renderDriversTable(data) {
+        let container = document.getElementById('drivers-list');
+        let hasMore = data.length > currentLimit;
+        let rows = data.slice(0, currentLimit);
+        if (rows.length === 0) { container.innerHTML = '<p>Список порожній</p>'; return; }
+        let html = '<table><tr><th>ПІБ</th><th>Телефон</th><th>Посвідчення</th><th>Перевізник</th><th>Дії</th></tr>';
+        rows.forEach(x => {
+            html += `<tr data-name="${escapeHtml(x.full_name.toLowerCase())}">
+                <td><a onclick="openDriver(${x.id})" style="color:blue; cursor:pointer;">${escapeHtml(x.full_name)}</a></td>
+                <td>${escapeHtml(x.phone)}</td>
+                <td>${escapeHtml(x.license_number)}</td>
+                <td>${escapeHtml(x.company_name)}</td>
+                <td>
+                    <button onclick="editDriver(${x.id}, '${escapeHtml(x.full_name)}', '${escapeHtml(x.phone)}', '${escapeHtml(x.license_number)}', ${x.company_id})">Редагувати</button>
+                    <button class="danger" onclick="deleteDriver(${x.id})">Видалити</button>
+                </td>
+            </tr>`;
+        });
+        container.innerHTML = html + '</table>';
+        document.getElementById('page-num').innerText = (currentOffset / currentLimit) + 1;
+    }
+
+    function filterDrivers() {
+        let q = document.getElementById('driver-search').value.toLowerCase();
+        let rows = document.querySelectorAll('#drivers-list tr:not(:first-child)');
+        rows.forEach(r => {
+            let name = r.getAttribute('data-name');
+            r.style.display = name.includes(q) ? '' : 'none';
+        });
+    }
+
+    function nextPage() {
+        if (window.driversData && window.driversData.length > currentLimit) {
+            currentOffset += currentLimit;
+            loadDrivers();
+        }
+    }
+
+    function prevPage() {
+        if (currentOffset >= currentLimit) {
+            currentOffset -= currentLimit;
+            loadDrivers();
+        }
+    }
+
+    async function saveDriver(e) {
+        e.preventDefault();
+        let id = document.getElementById('driver-edit-id').value;
+        let body = {
+            full_name: document.getElementById('drv-name').value.trim(),
+            phone: document.getElementById('drv-phone').value.trim(),
+            license_number: document.getElementById('drv-license').value.trim(),
+            company_id: parseInt(document.getElementById('drv-company-select').value)
+        };
+        let url = API + (id ? '/drivers/' + id : '/drivers');
+        let method = id ? 'PUT' : 'POST';
+        let res = await fetch(url, { method: method, headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+        if (res.ok) { resetDriverForm(); loadDrivers(); }
+        else { let err = await res.json(); alert(err.detail || 'Помилка'); }
+    }
+
+    function editDriver(id, name, phone, license, compId) {
+        document.getElementById('driver-edit-id').value = id;
+        document.getElementById('drv-name').value = name;
+        document.getElementById('drv-phone').value = phone;
+        document.getElementById('drv-license').value = license;
+        document.getElementById('drv-company-select').value = compId;
+        document.getElementById('drv-submit-btn').innerText = 'Оновити водія';
+        document.getElementById('drv-cancel-btn').classList.remove('hidden');
+    }
+
+    function resetDriverForm() {
+        document.getElementById('form-driver').reset();
+        document.getElementById('driver-edit-id').value = '';
+        document.getElementById('drv-submit-btn').innerText = 'Зберегти водія';
+        document.getElementById('drv-cancel-btn').classList.add('hidden');
+    }
+
+    async function deleteDriver(id) {
+        if (!confirm('Видалити водія та всі його допуски?')) return;
+        let res = await fetch(API + '/drivers/' + id, { method: 'DELETE' });
+        if (res.status === 204) loadDrivers();
+        else { let err = await res.json(); alert(err.detail || 'Помилка'); }
+    }
+
+    // --- КАРТКА ВОДІЯ ТА ДОПУСКИ ---
+    async function openDriver(id) {
+        activeDriverId = id;
+        try {
+            let res = await fetch(API + '/drivers/' + id);
+            let d = await res.json();
+            document.getElementById('det-driver-title').innerText = d.full_name;
+            document.getElementById('det-phone').innerText = d.phone;
+            document.getElementById('det-license').innerText = d.license_number;
+            document.getElementById('det-comp').innerText = d.company_name;
+
+            showSection('driver-detail');
+            document.getElementById('sec-driver-detail').classList.remove('hidden');
+            loadDriverRoutes(id);
+        } catch (e) { alert('Водія не знайдено'); }
+    }
+
+    async function loadDriverRoutes(driverId) {
+        let container = document.getElementById('det-routes-list');
+        container.innerHTML = 'Завантаження...';
+        try {
+            let [resAssigned, resAllRoutes] = await Promise.all([
+                fetch(API + `/drivers/${driverId}/routes`).then(r => r.json()),
+                fetch(API + '/routes').then(r => r.json())
+            ]);
+
+            document.getElementById('det-routes-count').innerText = `${resAssigned.length} маршрутів`;
+
+            if (resAssigned.length === 0) { container.innerHTML = '<p>Допусків немає</p>'; }
+            else {
+                let html = '<table><tr><th>№</th><th>Назва</th><th>Відстань</th><th>Дія</th></tr>';
+                resAssigned.forEach(r => {
+                    html += `<tr><td>${escapeHtml(r.number)}</td><td>${escapeHtml(r.title)}</td><td>${r.distance_km} км</td>
+                    <td><button class="danger" onclick="unassignRoute(${driverId}, ${r.route_id})">Скасувати</button></td></tr>`;
+                });
+                container.innerHTML = html + '</table>';
+            }
+
+            // Заповнення селекта лише маршрутами, яких ще немає у водія
+            let assignedIds = resAssigned.map(r => r.route_id);
+            let availableRoutes = resAllRoutes.filter(r => !assignedIds.includes(r.id));
+            let sel = document.getElementById('assign-route-select');
+            sel.innerHTML = '';
+            availableRoutes.forEach(r => {
+                let opt = document.createElement('option');
+                opt.value = r.id;
+                opt.innerText = `№${r.number} - ${r.title}`;
+                sel.appendChild(opt);
+            });
+            if (availableRoutes.length === 0) {
+                sel.innerHTML = '<option value="">Усі маршрути вже призначені</option>';
+            }
+        } catch { container.innerHTML = '<p class="error">Помилка завантаження допусків</p>'; }
+    }
+
+    async function assignRoute(e) {
+        e.preventDefault();
+        let routeId = document.getElementById('assign-route-select').value;
+        if (!routeId) return;
+        let body = { driver_id: activeDriverId, route_id: parseInt(routeId) };
+        let res = await fetch(API + '/assignments', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+        if (res.ok) { loadDriverRoutes(activeDriverId); }
+        else { let err = await res.json(); alert(err.detail || 'Помилка'); }
+    }
+
+    async function unassignRoute(driverId, routeId) {
+        if (!confirm('Скасувати допуск?')) return;
+        let res = await fetch(`${API}/assignments/${driverId}/${routeId}`, { method: 'DELETE' });
+        if (res.status === 204) { loadDriverRoutes(driverId); }
+        else { let err = await res.json(); alert(err.detail || 'Помилка'); }
+    }
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+    }
+
+    window.onload = loadHome;
+</script>
+</body>
+</html>
