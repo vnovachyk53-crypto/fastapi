@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <header class="mb-8 flex flex-col md:flex-row justify-between items-center border-b pb-4">
+            <h1 class="text-3xl font-bold text-blue-600">💰 Expense Tracker API</h1>
+            <p class="text-sm text-slate-500 mt-2 md:mt-0">Облік витрат та фінансова статистика</p>
+        </header>
+
+        <div id="alert-box" class="hidden mb-6 p-4 rounded-lg text-sm font-medium transition-all"></div>
+
+        <section class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                <p class="text-xs text-slate-400 uppercase font-semibold">Всього записів</p>
+                <p id="stat-count" class="text-2xl font-bold text-slate-700">0</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                <p class="text-xs text-slate-400 uppercase font-semibold">Загальна сума</p>
+                <p id="stat-total" class="text-2xl font-bold text-blue-600">0.00 ₴</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                <p class="text-xs text-slate-400 uppercase font-semibold">Середня витрата</p>
+                <p id="stat-avg" class="text-2xl font-bold text-slate-700">0.00 ₴</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
+                <p class="text-xs text-slate-400 uppercase font-semibold">Мінімальна</p>
+                <p id="stat-min" class="text-2xl font-bold text-green-600">0.00 ₴</p>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 col-span-2 md:col-span-1">
+                <p class="text-xs text-slate-400 uppercase font-semibold">Максимальна</p>
+                <p id="stat-max" class="text-2xl font-bold text-red-500">0.00 ₴</p>
+            </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-1">
+                <h2 class="text-xl font-semibold mb-4 text-slate-700">Категорії</h2>
+
+                <form id="category-form" class="mb-4 flex gap-2">
+                    <input type="text" id="category-name" placeholder="Назва категорії" required maxlength="50"
+                           class="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">Додати</button>
+                </form>
+
+                <div class="overflow-y-auto max-h-72">
+                    <ul id="categories-list" class="space-y-2">
+                    </ul>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 lg:col-span-2">
+                <h2 class="text-xl font-semibold mb-4 text-slate-700">Витрати</h2>
+
+                <form id="expense-form" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 p-4 bg-slate-50 rounded-xl border">
+                    <input type="text" id="expense-title" placeholder="Назва витрати" required maxlength="100"
+                           class="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                    <input type="number" id="expense-amount" placeholder="Сума (₴)" step="0.01" min="0.01" max="1000000000" required
+                           class="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                    <input type="date" id="expense-date" required
+                           class="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                    <select id="expense-category" required
+                            class="px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white">
+                        <option>Оберіть категорію</option>
+                    </select>
+                    <button type="submit" class="sm:col-span-2 bg-emerald-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition">Зберегти витрату</button>
+                </form>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                    <input type="text" id="search-q" placeholder="Пошук за назвою..."
+                           class="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select id="filter-category" class="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Усі категорії</option>
+                    </select>
+                    <select id="sort-by" class="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="spent_on:asc">Спершу новіші дати</option>
+                        <option value="spent_on:desc">Спершу старіші дати</option>
+                        <option value="amount:desc">За сумою (спадання)</option>
+                        <option value="amount:asc">За сумою (зростання)</option>
+                        <option value="title:asc">За назвою (A-Z)</option>
+                    </select>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="border-b text-slate-400 uppercase text-xs">
+                                <th class="py-2 px-3">Дата</th>
+                                <th class="py-2 px-3">Назва</th>
+                                <th class="py-2 px-3">Категорія</th>
+                                <th class="py-2 px-3">Сума</th>
+                                <th class="py-2 px-3 text-right">Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expenses-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000";
+
+        let categoriesMap = {};
+
+        function showAlert(message, type = "error") {
+            const box = document.getElementById("alert-box");
+            box.textContent = message;
+            box.className = `mb-6 p-4 rounded-lg text-sm font-medium transition-all ${
+                type === "error" ? "bg-red-100 text-red-700 border border-red-200" : "bg-green-100 text-green-700 border border-green-200"
+            }`;
+            box.classList.remove("hidden");
+            setTimeout(() => box.classList.add("hidden"), 5000);
+        }
+
+        async function loadSummary() {
+            try {
+                const res = await fetch(`${API_URL}/stats/summary`);
+                if (!res.ok) throw new Error("Помилка завантаження статистики");
+                const data = await res.json();
+
+                document.getElementById("stat-count").textContent = data.expenses_count;
+                document.getElementById("stat-total").textContent = `${data.total_amount.toFixed(2)} ₴`;
+                document.getElementById("stat-avg").textContent = data.avg_amount !== null ? `${data.avg_amount.toFixed(2)} ₴` : "0.00 ₴";
+                document.getElementById("stat-min").textContent = data.min_amount !== null ? `${data.min_amount.toFixed(2)} ₴` : "0.00 ₴";
+                document.getElementById("stat-max").textContent = data.max_amount !== null ? `${data.max_amount.toFixed(2)} ₴` : "0.00 ₴";
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadCategories() {
+            try {
+                const res = await fetch(`${API_URL}/categories/`);
+                if (!res.ok) throw new Error("Не вдалося завантажити категорії");
+                const categories = await res.json();
+
+                categoriesMap = {};
+                const listEl = document.getElementById("categories-list");
+                const selectEl = document.getElementById("expense-category");
+                const filterEl = document.getElementById("filter-category");
+
+                listEl.innerHTML = "";
+                selectEl.innerHTML = '<option value="">Оберіть категорію</option>';
+                filterEl.innerHTML = '<option value="">Усі категорії</option>';
+
+                categories.forEach(cat => {
+                    categoriesMap[cat.id] = cat.name;
+
+
+                    listEl.innerHTML += `
+                        <li class="flex justify-between items-center p-2 bg-slate-50 rounded-lg border text-sm">
+                            <span class="font-medium">${cat.name}</span>
+                            <button onclick="deleteCategory(${cat.id})" class="text-red-500 hover:text-red-700 text-xs px-2 py-1">Видалити</button>
+                        </li>
+                    `;
+
+
+                    selectEl.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+                    filterEl.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+                });
+
+                loadExpenses();
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        document.getElementById("category-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const name = document.getElementById("category-name").value.trim();
+
+            try {
+                const res = await fetch(`${API_URL}/categories/`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name })
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.detail || "Помилка створення категорії");
+                }
+
+                document.getElementById("category-name").value = "";
+                showAlert("Категорію успішно створено!", "success");
+                loadCategories();
+            } catch (err) {
+                showAlert(err.message);
+            }
+        });
+
+        async function deleteCategory(id) {
+            if (!confirm("Ви впевнені, що хочете видалити категорію?")) return;
+            try {
+                const res = await fetch(`${API_URL}/categories/${id}`, { method: "DELETE" });
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.detail || "Неможливо видалити категорію");
+                }
+                showAlert("Категорію видалено", "success");
+                loadCategories();
+                loadSummary();
+            } catch (err) {
+                showAlert(err.message);
+            }
+        }
+
+        async function loadExpenses() {
+            try {
+                const q = document.getElementById("search-q").value.trim();
+                const categoryId = document.getElementById("filter-category").value;
+                const [sortBy, order] = document.getElementById("sort-by").value.split(":");
+
+                let url = `${API_URL}/expenses/?sort_by=${sortBy}&order=${order}&limit=50&offset=0`;
+                if (q) url += `&q=${encodeURIComponent(q)}`;
+                if (categoryId) url += `&category_id=${categoryId}`;
+
+                const res = await fetch(url);
+                if (!res.ok) throw new Error("Помилка завантаження витрат");
+                const expenses = await res.json();
+
+                const tbody = document.getElementById("expenses-table-body");
+                tbody.innerHTML = "";
+
+                if (expenses.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-slate-400">Витрат не знайдено</td></tr>`;
+                    return;
+                }
+
+                expenses.forEach(exp => {
+                    const catName = categoriesMap[exp.category_id] || "Невідомо";
+                    tbody.innerHTML += `
+                        <tr class="border-b hover:bg-slate-50 transition">
+                            <td class="py-3 px-3 text-slate-600">${exp.spent_on}</td>
+                            <td class="py-3 px-3 font-medium text-slate-800">${exp.title}</td>
+                            <td class="py-3 px-3"><span class="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-xs font-semibold">${catName}</span></td>
+                            <td class="py-3 px-3 font-bold text-slate-700">${exp.amount.toFixed(2)} ₴</td>
+                            <td class="py-3 px-3 text-right">
+                                <button onclick="deleteExpense(${exp.id})" class="text-red-500 hover:text-red-700 text-xs">Видалити</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        document.getElementById("expense-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const title = document.getElementById("expense-title").value.trim();
+            const amount = parseFloat(document.getElementById("expense-amount").value);
+            const spent_on = document.getElementById("expense-date").value;
+            const category_id = parseInt(document.getElementById("expense-category").value);
+
+            try {
+                const res = await fetch(`${API_URL}/expenses/`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ title, amount, spent_on, category_id })
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.detail || "Помилка додавання витрати");
+                }
+
+                document.getElementById("expense-form").reset();
+                document.getElementById("expense-date").valueAsDate = new Date();
+                showAlert("Витрату успішно додано!", "success");
+                loadExpenses();
+                loadSummary();
+            } catch (err) {
+                showAlert(err.message);
+            }
+        });
+
+        async function deleteExpense(id) {
+            if (!confirm("Видалити цю витрату?")) return;
+            try {
+                const res = await fetch(`${API_URL}/expenses/${id}`, { method: "DELETE" });
+                if (!res.ok) throw new Error("Помилка видалення");
+                showAlert("Витрату видалено", "success");
+                loadExpenses();
+                loadSummary();
+            } catch (err) {
+                showAlert(err.message);
+            }
+        }
+
+        document.getElementById("search-q").addEventListener("input", loadExpenses);
+        document.getElementById("filter-category").addEventListener("change", loadExpenses);
+        document.getElementById("sort-by").addEventListener("change", loadExpenses);
+
+        window.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("expense-date").valueAsDate = new Date();
+            loadSummary();
+            loadCategories();
+        });
+    </script>
+</body>
+</html>
