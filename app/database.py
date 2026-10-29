@@ -1,21 +1,51 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, DeclarativeBase
+from collections.abc import Iterator
+from typing import Annotated
 
-class Base(DeclarativeBase):
-    pass
+from fastapi import Depends, Request
+from mysql.connector import pooling
+from mysql.connector.constants import ClientFlag
+from mysql.connector.pooling import MySQLConnectionPool, PooledMySQLConnection
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./task_manager.db"
+from .config import Settings
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
+Connection = PooledMySQLConnection
+
+POOL_SIZE = 5
+
+# Суворий режим сеансу: помилка замість мовчазного обрізання рядків чи нульових дат.
+SQL_MODE = (
+    "STRICT_ALL_TABLES,ONLY_FULL_GROUP_BY,NO_ZERO_IN_DATE,NO_ZERO_DATE,"
+    "ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION"
 )
 
-SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
-def get_db():
-    db = SessionLocal()
+def create_pool(settings: Settings) -> MySQLConnectionPool:
+    return pooling.MySQLConnectionPool(
+        pool_name="expense_pool",
+        pool_size=POOL_SIZE,
+        host=settings.host,
+        port=settings.port,
+        user=settings.user,
+        password=settings.password.get_secret_value(),
+        database=settings.database,
+        charset="utf8mb4",
+        collation="utf8mb4_unicode_ci",
+        autocommit=False,
+        sql_mode=SQL_MODE,
+        connection_timeout=5,
+        client_flags=[-ClientFlag.MULTI_STATEMENTS],
+    )
+
+
+def get_conn(request: Request) -> Iterator[Connection]:
+    conn = request.app.state.pool.get_connection()
     try:
-        yield db
+        yield conn
+    except Exception:
+        conn.rollback()
+        raise
     finally:
-        db.close()
+        conn.close()  # повертає з'єднання в пул
+
+
+Conn = Annotated[Connection, Depends(get_conn)]

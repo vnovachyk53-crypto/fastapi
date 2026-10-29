@@ -1,56 +1,67 @@
-from datetime import date, datetime
+from datetime import date
+from decimal import Decimal
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
-from app.models import Priority
-
-
-class TaskBase(BaseModel):
-    title: str = Field(min_length=1, max_length=150)
-    description: str | None = None
-    priority: Priority = Priority.medium
-    due_date: date | None = None
-
-
-class TaskCreate(TaskBase):
-    pass
+Name = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=50)
+]
+Title = Annotated[
+    str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)
+]
+Money = Annotated[Decimal, Field(gt=0, le=10000000, decimal_places=2)]
+EntityId = Annotated[int, Field(gt=1, le=1000000000)]
 
 
-class TaskUpdate(BaseModel):
-    title: str | None = Field(default=None, min_length=1, max_length=150)
-    description: str | None = None
-    priority: Priority | None = None
-    due_date: date | None = None
-    is_done: bool | None = None
+class Strict(BaseModel):
+    model_config = ConfigDict(extra="forbid")
 
 
-class TaskResponse(TaskBase):
+# ---- Category
+class CategoryCreate(Strict):
+    name: Name
+
+
+class CategoryResponse(BaseModel):
     id: int
-    is_done: bool
-    created_at: datetime
-    project_id: int
-
-    model_config = ConfigDict(from_attributes=True)
+    name: str
 
 
-# ========================
-class ProjectBase(BaseModel):
-    name: str = Field(min_length=1, max_length=200)
-    description: str | None = None
+# -----Expense
+class ExpenseCreate(Strict):
+    title: Title
+    amount: Money
+    spent_on: date
+    category_id: EntityId
 
 
-class ProjectCreate(ProjectBase):
-    pass
-
-
-class ProjectUpdate(BaseModel):
-    name: str | None = Field(default=None, min_length=1, max_length=200)
-    description: str | None = None
-
-
-class ProjectResponse(ProjectBase):
+class ExpenseResponse(BaseModel):
     id: int
-    created_at: datetime
-    tasks: list[TaskResponse] = []
+    title: str
+    amount: float
+    spent_on: date
+    category_id: int
 
-    model_config = ConfigDict(from_attributes=True)
+
+# --- Summary
+class Summary(BaseModel):
+    expense_count: int
+    total_amount: float
+    avg_amount: float | None
+    min_amount: float | None
+    max_amount: float | None
+
+
+class CategoryStat(BaseModel):
+    id: int
+    name: str
+    expense_count: int
+    total_amount: float
+    avg_amount: float | None
+
+
+class MonthStat(BaseModel):
+    month: str
+    expense_count: int
+    total_amount: float
