@@ -1,6 +1,6 @@
 # Workout Tracker — SQLAlchemy ORM + MySQL 8
 
-Готове виконання домашнього завдання: FastAPI, Pydantic 2, SQLAlchemy ORM 2.x та MySQL 8 (PyMySQL).
+2, SQLAlchemy ORM 2.x та MySQL 8 (PyMySQL).
 
 ## 1. Що реалізовано
 
