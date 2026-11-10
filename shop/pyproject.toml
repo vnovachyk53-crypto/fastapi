@@ -1,0 +1,12 @@
+[project]
+name = "test-lec"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi[standard]>=0.162.0",
+    "pwdlib[argon2]>=0.3.1",
+    "pymysql[rsa]>=1.2.3",
+    "sqlalchemy>=2.1.6",
+]

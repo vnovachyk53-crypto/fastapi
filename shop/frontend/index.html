@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111318">
+  <title>Bookly — каталог книг</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="script/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="brand-mark">b.</span><span>bookly</span></a>
+    <nav class="nav-links"><a href="#catalog">Каталог</a><a href="#about">Про магазин</a></nav>
+    <div class="header-actions">
+      <span id="userLabel" class="user-label"></span>
+      <button id="authButton" class="button button-light">Увійти</button>
+      <button id="logoutButton" class="button button-outline hidden">Вийти</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow"><span class="eyebrow-dot"></span> ПРОСТІР ДЛЯ ІСТОРІЙ</span>
+        <h1>Знайди свою<br><em>наступну</em> історію.</h1>
+        <p>Добірка книг, до яких хочеться повертатися. Переглядай каталог та відкривай для себе нові світи.</p>
+        <a class="button button-primary" href="#catalog">Переглянути каталог <span>↗</span></a>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <div class="sun"></div><div class="book book-back"><span>THE ART<br>OF READING</span></div>
+        <div class="book book-front"><small>BOOKLY EDITION</small><strong>Stories<br>that stay.</strong><i></i><small>VOL. 01 — 2026</small></div>
+        <div class="hero-note">Відкрий щось нове <span>✳</span></div>
+      </div>
+    </section>
+
+    <section class="catalog section" id="catalog">
+      <div class="section-heading">
+        <div><span class="eyebrow">НАША КОЛЕКЦІЯ</span><h2>Популярні книги<span class="accent">.</span></h2></div>
+        <div class="catalog-tools"><span id="bookCount" class="book-count">Завантаження...</span><input id="searchInput" class="search" type="search" placeholder="Пошук книги або автора..."></div>
+      </div>
+      <div id="adminPanel" class="admin-panel hidden">
+        <div><strong>Режим керування</strong><span>Ти увійшов — можеш змінювати каталог.</span></div>
+        <button id="addBookButton" class="button button-primary">＋ Додати книгу</button>
+      </div>
+      <div id="message" class="message hidden" role="status"></div>
+      <div id="bookGrid" class="book-grid"><div class="loading">Завантажуємо каталог...</div></div>
+    </section>
+
+    <section class="about section" id="about">
+      <span class="eyebrow">ТРОХИ ПРО BOOKLY</span><h2>Книги — це більше,<br>ніж просто сторінки.</h2>
+      <p>Зручний каталог, у якому кожна історія знаходить свого читача.</p>
+    </section>
+  </main>
+
+  <footer><a class="brand" href="/"><span class="brand-mark">b.</span><span>bookly</span></a><span>© 2026 Bookly. Навчальний проєкт.</span></footer>
+
+  <div id="authModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="modal-backdrop" data-close="auth"></div><div class="modal-card">
+      <button class="modal-close" data-close="auth" aria-label="Закрити">×</button>
+      <span class="eyebrow">РАДІ ТЕБЕ БАЧИТИ</span><h2 id="authTitle">Увійти в акаунт</h2><p id="authDescription" class="modal-description">Увійди, щоб керувати каталогом.</p>
+      <div class="auth-tabs"><button class="tab active" data-auth-mode="login">Вхід</button><button class="tab" data-auth-mode="register">Реєстрація</button></div>
+      <form id="authForm"><label>Логін<input name="username" autocomplete="username" required minlength="1" placeholder="Твій логін"></label><label>Пароль<input name="password" type="password" autocomplete="current-password" required minlength="1" placeholder="Твій пароль"></label><button id="authSubmit" class="button button-primary full" type="submit">Увійти</button></form>
+      <p id="authError" class="form-error" role="alert"></p>
+    </div>
+  </div>
+
+  <div id="bookModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="bookModalTitle">
+    <div class="modal-backdrop" data-close="book"></div><div class="modal-card">
+      <button class="modal-close" data-close="book" aria-label="Закрити">×</button><span class="eyebrow">КАТАЛОГ BOOKLY</span><h2 id="bookModalTitle">Нова книга</h2><p class="modal-description">Заповни інформацію про книгу.</p>
+      <form id="bookForm"><label>Назва<input name="title" required maxlength="150" placeholder="Наприклад, Маленький принц"></label><label>Автор<input name="author" required maxlength="100" placeholder="Ім'я автора"></label><label>Жанр<input name="genre" required maxlength="80" placeholder="Наприклад, Фантастика"></label><button class="button button-primary full" type="submit">Зберегти книгу</button></form>
+      <p id="bookError" class="form-error" role="alert"></p>
+    </div>
+  </div>
+
+  <div id="detailModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <div class="modal-backdrop" data-close="detail"></div><div class="modal-card detail-card"><button class="modal-close" data-close="detail" aria-label="Закрити">×</button><div id="detailContent"></div></div>
+  </div>
+</body>
+</html>
